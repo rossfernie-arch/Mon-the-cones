@@ -101,8 +101,8 @@ const ADVENTURE_CHUNKS=[
 {platforms:[[330,380,65],[830,400,122],[1450,420,75]],hazards:[1350,2130],style:'roadworks'},
 {platforms:[[340,450,70],[920,400,140],[1450,430,220,'crumble'],[1930,320,223],[1300,1150,85]],hazards:[2300],style:'rare_cone_roof'}
 ];
-function makeAdventureChunk(id){let phase=Math.min(4,Math.floor(id/4)),pool=phase<2?4:8;advSeed=(Math.imul(advSeed,1664525)+1013904223)>>>0;let choice=id===0?0:id>=12&&advSeed%17===0?8:advSeed%pool;if(choice===advLastKind)choice=(choice+1)%pool;advLastKind=choice;let spec=ADVENTURE_CHUNKS[choice],base=id*ADVENTURE_LENGTH;for(const [at,width,height,behavior] of spec.platforms){let dynamic=phase>=2?behavior:null;course.push({kind:'platform',at:base+at,width,height,band:height>160?'high':height>105?'middle':'low',prototype:true,behavior:dynamic||'stable',phase:id*1.3+at*.01,crumbleClock:0,broken:false});for(const t of [.27,.69])course.push({kind:'coin',at:base+at+width*t,height:height+25,taken:false})}for(const at of spec.hazards)course.push({kind:phase>2&&id%3===0?'tall':'low',at:base+at,width:phase>2?40:38,height:phase>2&&id%3===0?49:29});if(id>2&&id%3===0)course.push({kind:'enemy',at:base+1740,width:36,height:28,pace:65+phase*7,advance:0,intro:false});let fork=spec.platforms.find(p=>p[0]<1600&&p[2]>100)||spec.platforms[1],forkAt=base+fork[0]+Math.min(180,fork[1]/2);course.push({kind:'power',power:'boost',fork:id,at:forkAt,height:fork[2]+24,taken:false},{kind:'power',power:'slow',fork:id,at:forkAt,height:39,taken:false});if(id%5===3)course.push({kind:'power',power:'shield',at:base+2300,height:47,taken:false});if(id%7===5)course.push({kind:'power',power:'leap',at:base+2350,height:47,taken:false});if(id%3===0)course.push({kind:'power',power:'launcher',at:base+590,height:49,taken:false});if(id>0&&id%2===0)course.push({kind:'gull',at:base+1780,width:37,height:phase>2?78:144,pace:55+phase*9,advance:0,phase:id,loot:id%4===0?'gold':'cones',taken:false,hostile:false});if(choice===8)for(let j=0;j<8;j++)course.push({kind:'coin',at:base+1480+j*67,height:246,taken:false});advChunksGenerated++}
-function startAdventure(){ensureScene(0);if(mode==='paused'&&adventure)persist();adventure=true;stage=0;previousStage=0;biomeFade=0;travel=elapsed=clock=nowTime=0;coins=conesCarried=relicMask=advScore=0;advChunksGenerated=0;advLastKind=-1;advSeed=(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0;course=[];particles=[];hero.y=ground-hero.r;hero.vy=hero.jumps=hero.buffer=hero.land=0;hero.coyote=.105;hero.hold=false;jumpPointerId=null;hero.holdTime=hero.routeHeight=0;hero.onPlatform=false;cameraY=0;launcherTime=launcherCooldown=fireCharge=runShots=0;launcherTier=1;shots=[];fallenGulls=[];skillStats={enemyHits:0,gullHits:0,coneChain:0,bestChain:0,lastConeAt:-100};power=null;powerTime=fastStacks=slowStacks=0;shieldReady=false;invulnerable=0;musicNext=0;for(let i=0;i<3;i++)makeAdventureChunk(i);UI.banner.hidden=true;ui('playing');updateHud();tone(350,.13)}
+function makeAdventureChunk(id){let phase=Math.min(4,Math.floor(id/4)),pool=phase<2?4:8;advSeed=(Math.imul(advSeed,1664525)+1013904223)>>>0;let choice=id===0?0:id>=12&&advSeed%17===0?8:advSeed%pool;if(choice===advLastKind)choice=(choice+1)%pool;advLastKind=choice;let spec=ADVENTURE_CHUNKS[choice],base=id*ADVENTURE_LENGTH;for(const [at,width,height,behavior] of spec.platforms){let dynamic=phase>=2?behavior:null;course.push({kind:'platform',at:base+at,width,height,band:height>160?'high':height>105?'middle':'low',prototype:true,behavior:dynamic||'stable',phase:id*1.3+at*.01,crumbleClock:0,broken:false});for(const t of [.27,.69])course.push({kind:'coin',at:base+at+width*t,height:height+25,taken:false})}for(const at of spec.hazards)course.push({kind:phase>2&&id%3===0?'tall':'low',at:base+at,width:phase>2?40:38,height:phase>2&&id%3===0?49:29});if(id>2&&id%3===0)course.push({kind:'enemy',at:base+1740,width:36,height:28,pace:65+phase*7,advance:0,intro:false});let fork=spec.platforms.find(p=>p[0]<1600&&p[2]>100)||spec.platforms[1],forkAt=base+fork[0]+Math.min(180,fork[1]/2);course.push({kind:'power',power:'boost',fork:id,at:forkAt,height:fork[2]+24,taken:false},{kind:'power',power:'slow',fork:id,at:forkAt,height:39,taken:false});if(id%5===3)course.push({kind:'power',power:'shield',at:base+2300,height:47,taken:false});if(id%7===5)course.push({kind:'power',power:'leap',at:base+2350,height:47,taken:false});if(id%3===0)course.push({kind:'power',power:'launcher',at:base+590,height:49,taken:false});if(id>0&&id%2===0)course.push({kind:'gull',at:base+1780,width:37,height:phase>2?78:144,pace:55+phase*9,advance:0,phase:id,loot:id%4===0?'gold':'cones',taken:false,hostile:false});if(choice===8)for(let j=0;j<8;j++)course.push({kind:'coin',at:base+1480+j*67,height:246,taken:false});addAdventureRoute(id,phase,choice);advChunksGenerated++}
+function startAdventure(){ensureScene(0);if(mode==='paused'&&adventure)persist();adventure=true;stage=0;previousStage=0;biomeFade=0;travel=elapsed=clock=nowTime=0;coins=conesCarried=relicMask=advScore=0;advChunksGenerated=0;advLastKind=-1;advLastRoute='';advSeed=(Date.now()^Math.floor(Math.random()*0xffffffff))>>>0;course=[];particles=[];hero.y=ground-hero.r;hero.vy=hero.jumps=hero.buffer=hero.land=0;hero.coyote=.105;hero.hold=false;jumpPointerId=null;hero.holdTime=hero.routeHeight=0;hero.onPlatform=false;cameraY=0;launcherTime=launcherCooldown=fireCharge=runShots=0;launcherTier=1;shots=[];fallenGulls=[];skillStats={enemyHits:0,gullHits:0,coneChain:0,bestChain:0,lastConeAt:-100};power=null;powerTime=fastStacks=slowStacks=0;shieldReady=false;invulnerable=0;musicNext=0;for(let i=0;i<3;i++)makeAdventureChunk(i);UI.banner.hidden=true;ui('playing');updateHud();tone(350,.13)}
 function endAdventure(reason){if(mode!=='playing')return;jumpPointerId=null;spriteDeathAt=performance.now();let distance=Math.floor(travel/10),score=advScore+distance,bestDistance=distance>save.adventure.bestDistance,bestScore=score>save.adventure.bestScore;let run={name:save.playerName,score,distance,coins,ms:Math.round(elapsed*1000),at:Date.now(),bestCombo:skillStats.bestChain,enemyHits:skillStats.enemyHits,gullHits:skillStats.gullHits};save.adventure.runs.push(run);save.adventure.runs.sort(compareRuns);let rank=save.adventure.runs.indexOf(run)+1;if(rank>10)rank=0;save.adventure.runs.length=Math.min(10,save.adventure.runs.length);save.adventure.bestDistance=Math.max(save.adventure.bestDistance,distance);save.adventure.bestScore=Math.max(save.adventure.bestScore,score);save.adventure.bestCones=Math.max(save.adventure.bestCones,coins);persist();shake=5;burst(hero.x,hero.y,worlds[stage].edge,24);tone(bestScore||bestDistance?680:158,.18,bestScore||bestDistance?'triangle':'sawtooth',.04);ui('adventureDead');UI.message.textContent=bestDistance?'NEW DISTANCE RECORD!':bestScore?'NEW SCORE RECORD!':`${reason||'A hazard'} caught ${CHARACTERS[save.selectedCharacter].name}. Go again?`;UI.results.innerHTML=`<div class="stats"><div><small>DISTANCE</small><strong>${distance} m</strong></div><div><small>SCORE</small><strong>${score}</strong></div><div><small>COLLECTED</small><strong>${coins}</strong></div></div><div class="relicresult"><small>${rank?`#${rank} ON YOUR SCOREBOARD · `:''}BEST ${save.adventure.bestDistance} m · TOP SCORE ${save.adventure.bestScore}</small></div>`}
 
 function cleanName(value){return Array.from(String(value??'').replace(/[\x00-\x1f\x7f]/g,'').trim()).slice(0,12).join('')||'PLAYER'}
@@ -125,6 +125,117 @@ const CAMPAIGN_PLATFORMS=[
 ];
 const CAMPAIGN_HAZARDS=[[5030,14230],[4730,7780,11200,14280,17370],[4640,8170,11900,16200],[4620,7840,11060,14450,17900],[4680,7880,11050,14400,17720]];
 const CAMPAIGN_RELICS=[[6200,10420,18750],[4020,9920,19270],[3630,10430,18950],[3710,10080,16780],[3730,10130,19800]];
+// Authored side-view route sections. Coordinates are world pixels relative to
+// each section's start. Entrances and exits are ground level, so campaign and
+// Adventure can connect sections without requiring a particular upper route.
+const ROUTE_CHUNKS={
+  phone_shelter:{width:1120,entry:'ground',exit:'ground',firstDecision:320,paths:['jump-phone','shelter-roof','under-shelter'],pieces:[
+    {kind:'platform',dx:320,width:78,height:86,structure:'phone',solidBody:true},
+    {kind:'platform',dx:548,width:244,height:92,structure:'shelter'},
+    {kind:'routeBarrier',dx:931,width:44,height:29,structure:'roadworks'},
+    ...[[225,45],[270,73],[325,116],[490,85],[610,125],[728,125],[850,54]].map(([dx,height])=>({kind:'coin',dx,height}))
+  ]},
+  skip_climb:{width:1160,entry:'ground',exit:'ground',firstDecision:332,paths:['jump-skip','crate-step','scaffold-top'],pieces:[
+    {kind:'platform',dx:332,width:112,height:62,structure:'skip',solidBody:true},
+    {kind:'platform',dx:552,width:183,height:112,structure:'crate'},
+    {kind:'platform',dx:785,width:215,height:178,structure:'scaffold'},
+    ...[[244,43],[295,72],[353,93],[620,144],[810,209],[924,208]].map(([dx,height])=>({kind:'coin',dx,height}))
+  ]},
+  scaffold_split:{width:1230,entry:'ground',exit:'ground',firstDecision:278,paths:['ground','middle','high'],pieces:[
+    {kind:'platform',dx:278,width:230,height:68,structure:'scaffold'},
+    {kind:'platform',dx:538,width:266,height:132,structure:'scaffold'},
+    {kind:'platform',dx:828,width:226,height:192,structure:'scaffold'},
+    ...[[244,44],[350,99],[585,163],[731,164],[856,223],[975,223]].map(([dx,height])=>({kind:'coin',dx,height}))
+  ]},
+  bridge_underpass:{width:1190,entry:'ground',exit:'ground',firstDecision:255,paths:['under-bridge','over-bridge'],pieces:[
+    {kind:'platform',dx:255,width:164,height:67,structure:'railStep'},
+    {kind:'platform',dx:527,width:422,height:151,structure:'bridge'},
+    {kind:'routeCeiling',dx:585,width:310,height:122,thickness:18,structure:'bridgeBeam'},
+    ...[[241,51],[340,99],[504,128],[581,182],[690,181],[807,181],[978,49]].map(([dx,height])=>({kind:'coin',dx,height}))
+  ]},
+  stairs_zigzag:{width:1220,entry:'ground',exit:'ground',firstDecision:310,paths:['step-up','ground-recovery'],pieces:[
+    {kind:'platform',dx:310,width:154,height:62,structure:'stoneStep',solidBody:true},
+    {kind:'platform',dx:523,width:188,height:116,structure:'stoneStep'},
+    {kind:'platform',dx:750,width:187,height:171,structure:'stoneStep'},
+    {kind:'platform',dx:987,width:99,height:87,structure:'stoneStep'},
+    ...[[242,44],[316,93],[548,146],[779,203],[880,202],[1020,118]].map(([dx,height])=>({kind:'coin',dx,height}))
+  ]},
+  through_gate:{width:1120,entry:'ground',exit:'ground',firstDecision:285,paths:['ground-opening','over-wall'],pieces:[
+    {kind:'platform',dx:285,width:172,height:64,structure:'railStep'},
+    {kind:'platform',dx:541,width:420,height:129,structure:'arch'},
+    {kind:'routeCeiling',dx:592,width:315,height:106,thickness:16,structure:'archBeam'},
+    ...[[241,52],[315,95],[571,160],[660,160],[813,160],[974,46]].map(([dx,height])=>({kind:'coin',dx,height}))
+  ]},
+  low_ceiling:{width:1120,entry:'ground',exit:'ground',firstDecision:293,paths:['under-awning','awning-roof'],pieces:[
+    {kind:'platform',dx:293,width:182,height:64,structure:'crate'},
+    {kind:'platform',dx:544,width:415,height:113,structure:'shelter'},
+    {kind:'routeCeiling',dx:592,width:306,height:104,thickness:16,structure:'awningBeam'},
+    ...[[232,48],[315,96],[556,144],[674,146],[846,146],[995,50]].map(([dx,height])=>({kind:'coin',dx,height}))
+  ]},
+  false_end:{width:1270,entry:'ground',exit:'ground',firstDecision:272,paths:['ground-through','tempting-upper-ends'],falseRoute:true,pieces:[
+    {kind:'platform',dx:272,width:185,height:65,structure:'railStep'},
+    {kind:'platform',dx:540,width:306,height:132,structure:'bridge'},
+    {kind:'routeWarning',dx:668,width:52,height:210,baseHeight:132,structure:'closedSign'},
+    // The upper bridge ends before the fenced fragment. Missing its gap falls
+    // to safe ground, and a successful upper jump finds the fence clearly marked.
+    {kind:'platform',dx:996,width:100,height:132,structure:'bridge'},
+    {kind:'routeFence',dx:1020,width:52,height:64,baseHeight:132,structure:'fence'},
+    ...[[250,50],[316,96],[543,162],[650,163],[765,161],[880,46]].map(([dx,height])=>({kind:'coin',dx,height}))
+  ]}
+};
+
+const CAMPAIGN_ROUTE_SECTIONS=[
+  [[2000,'phone_shelter'],[8090,'stairs_zigzag'],[16900,'false_end']],
+  [[8230,'bridge_underpass'],[14500,'through_gate']],
+  [[8140,'skip_climb'],[14820,'scaffold_split']],
+  [[8120,'low_ceiling'],[14720,'false_end']],
+  [[8130,'scaffold_split'],[14790,'bridge_underpass']]
+];
+const ADVENTURE_ROUTE_POOL=[
+  ['phone_shelter','scaffold_split'],
+  ['phone_shelter','stairs_zigzag','bridge_underpass'],
+  ['skip_climb','scaffold_split','bridge_underpass','through_gate'],
+  ['low_ceiling','through_gate','skip_climb','false_end'],
+  ['false_end','scaffold_split','bridge_underpass','low_ceiling']
+];
+
+let advLastRoute='';
+function validateRouteChunk(spec){
+ if(spec.entry!=='ground'||spec.exit!=='ground'||spec.firstDecision<240||spec.width-spec.pieces.filter(e=>e.kind==='platform').at(-1).dx-spec.pieces.filter(e=>e.kind==='platform').at(-1).width<120)throw Error('Incompatible route connector');
+ for(const e of spec.pieces){
+  if(e.dx<0||e.dx+(e.width||0)>spec.width)throw Error('Route piece outside section');
+  if(e.kind==='routeCeiling'&&e.height-e.thickness<80)throw Error('Unsafe ground clearance');
+ }
+ return true
+}
+function applyRouteChunk(list,key,at){
+ const spec=ROUTE_CHUNKS[key];if(!spec||!validateRouteChunk(spec))throw Error('Invalid route section '+key);
+ if(list.some(e=>e.kind==='relic'&&e.at>=at-80&&e.at<at+spec.width+100))throw Error('Prize cone overlaps route section');
+ const replaced=new Set(['platform','low','tall','gate','flame','enemy','gull','coin','power']);
+ const left=at-115,right=at+spec.width+130,kept=[];
+ for(const e of list){
+  if(e.kind==='platform'&&e.at<right&&e.at+e.width>left){
+   // Keep the original route outside this section; remove overlap precisely.
+   if(e.at<left)kept.push({...e,width:left-e.at});
+   if(e.at+e.width>right)kept.push({...e,at:right,width:e.at+e.width-right});
+  }else if(!replaced.has(e.kind)||e.at<left||e.at>right)kept.push(e)
+ }
+ list=kept;
+ for(const piece of spec.pieces){let e={...piece,at:at+piece.dx,routeChunk:key};delete e.dx;
+  if(e.kind==='platform'){e.band=e.height>155?'high':e.height>105?'middle':'low';e.behavior='stable';e.phase=e.at*.01;e.crumbleClock=0;e.broken=false;e.prototype=true}
+  if(e.kind==='coin')e.taken=false;
+  list.push(e)}
+ return list
+}
+function buildCampaignRoutes(list,index){for(const [at,key] of CAMPAIGN_ROUTE_SECTIONS[index])list=applyRouteChunk(list,key,at);return list}
+function addAdventureRoute(id,phase,choice){
+ if(id%2!==0||id===0)return;
+ const pool=ADVENTURE_ROUTE_POOL[phase],index=(choice+id*3)%pool.length;
+ const key=pool[index]===advLastRoute?pool[(index+1)%pool.length]:pool[index],base=id*ADVENTURE_LENGTH;
+ advLastRoute=key;
+ course=applyRouteChunk(course,key,base+670)
+}
+
 function buildCourse(index){let list=index===0?buildVerticalPrototype([]):[];for(const [at,width,height,behavior] of CAMPAIGN_PLATFORMS[index])list.push({kind:'platform',at,width,height,band:height>155?'high':height>105?'middle':'low',prototype:true,behavior:behavior||'stable',phase:at*.01,crumbleClock:0,broken:false});for(const at of CAMPAIGN_HAZARDS[index])list.push({kind:'low',at,width:index>2?42:38,height:29});for(const [id,at] of CAMPAIGN_RELICS[index].entries()){if(index===0&&id===1)continue;let p=list.find(e=>e.kind==='platform'&&at>=e.at+15&&at<=e.at+e.width-20&&e.height>115);list.push({kind:'relic',at,height:p?p.height+25:id===2?112:103,id,taken:false})}for(const [i,at] of [1850,4800,8300,11300,14900,19000].entries()){if(index===0&&i>=2&&i<=4)continue;let p=list.find(e=>e.kind==='platform'&&at>=e.at+25&&at<=e.at+e.width-20&&e.height>80);list.push({kind:'power',power:'boost',fork:i,at,height:p?p.height+23:104,taken:false},{kind:'power',power:'slow',fork:i,at,height:39,taken:false})}list.push({kind:'power',power:'leap',at:6900,height:47,taken:false},{kind:'power',power:'shield',at:16870,height:46,taken:false});for(const [i,at] of [3790,10710,17690].entries()){if(index===0&&i===1)continue;list.push({kind:'enemy',at,width:36,height:28,pace:65+index*7+i*4,advance:0,intro:i===0})}for(const p of list.filter(e=>e.kind==='platform'&&e.height>=120)){if(index>0||p.at<7150||p.at>16600){for(const t of [.2,.55])list.push({kind:'coin',at:p.at+p.width*t,height:p.height+24,taken:false})}}for(const at of [380,890,1380,4200,7500,11400,15400,20300]){if(index===0&&at>=7150&&at<=16600)continue;for(let k=0;k<3;k++)list.push({kind:'coin',at:at+k*39,height:74+k*13,taken:false})}
  // Designed aerial beats and extra ground enemies increase decisions across worlds.
  const aerial=[
@@ -139,7 +250,7 @@ function buildCourse(index){let list=index===0?buildVerticalPrototype([]):[];for
   if(list.some(e=>['enemy','low','tall','gate','flame'].includes(e.kind)&&Math.abs(e.at-at)<280))at+=335;
   list.push({kind:'enemy',at,width:36,height:28,pace:68+index*12,advance:0,intro:false})}
  for(const at of [1650,9850,16100])list.push({kind:'power',power:'launcher',at:at+index*42,height:48,taken:false});
-return list.sort((a,b)=>a.at-b.at)}
+return buildCampaignRoutes(list,index).sort((a,b)=>a.at-b.at)}
 function buildVerticalPrototype(course){let list=course.filter(e=>e.at<7150||e.at>16600);const addPlatform=(band,at,width,height)=>list.push({kind:'platform',band,prototype:true,at,width,height});for(const [at,width,height] of [[7420,380,62],[12640,410,68],[16100,350,60]])addPlatform('low',at,width,height);for(const [at,width,height] of [[7870,420,132],[8190,640,82],[8890,680,86],[9650,900,90],[10750,900,84],[11780,800,88],[13090,430,136],[13770,1000,87],[14960,1000,90],[15820,500,85]])addPlatform('middle',at,width,height);for(const [at,width,height] of [[8350,520,200],[9010,500,200],[9680,380,202],[10280,480,202],[11010,440,196],[11710,420,200],[13290,530,200],[14020,420,204],[14680,450,198],[15390,440,192]])addPlatform('high',at,width,height);for(const [at,height] of [[7300,48],[7360,76],[7450,100],[7700,115],[7880,150],[8150,180],[8430,230],[8580,231],[9030,232],[9270,232],[9770,232],[10400,237],[10800,128],[11130,229],[11810,230],[12350,120],[12600,50],[12750,88],[13120,156],[13420,233],[14150,235],[14810,230],[15500,220],[16200,108]])list.push({kind:'coin',at,height,taken:false});list.push({kind:'relic',at:10420,height:228,id:1,taken:false});list.push({kind:'power',power:'shield',at:11380,height:108,taken:false});for(const [fork,at,height] of [[2,9300,225],[3,12200,145],[4,15100,225]])list.push({kind:'power',power:'boost',fork,at,height,taken:false},{kind:'power',power:'slow',fork,at,height:39,taken:false});for(const at of [8620,14400])list.push({kind:'low',at,width:42,height:29});return list}
 function mapMiniature(ctx,i){
  const w=172,h=88,colors=[['#929e9d','#ddb88a'],['#697c91','#b28972'],['#647581','#e2b589'],['#233b57','#d47b57'],['#647988','#d9b28d']][i],v=ctx.createLinearGradient(0,0,0,h);v.addColorStop(0,colors[0]);v.addColorStop(1,colors[1]);ctx.fillStyle=v;ctx.fillRect(0,0,w,h);
@@ -210,8 +321,25 @@ addEventListener('pointerdown',e=>{if(e.target.closest('button')||!UI.panel.hidd
 for(const kind of ['pointerup','pointercancel'])addEventListener(kind,e=>{if(jumpPointerId===e.pointerId){jumpPointerId=null;hero.hold=false}});addEventListener('keydown',e=>{if(e.target?.closest?.('input,textarea,[contenteditable=true]'))return;if(['Space','ArrowUp'].includes(e.code)){e.preventDefault();if(!e.repeat)requestJump(true)}else if(e.code==='Escape'||e.code==='Backspace'){e.preventDefault();if(mode==='playing')pause();else if(mode==='paused')adventure?showMain():showMap();else if(mode==='scoreboard')returnFromScores();else if(mode==='characters')showMain();else if(mode==='map'||mode==='won'||mode==='dead'||mode==='adventureDead')showMain()}});addEventListener('keyup',e=>{if(e.code==='Space'||e.code==='ArrowUp')hero.hold=false});document.addEventListener('visibilitychange',()=>{if(document.hidden){hero.hold=false;pause()}});
 function surfaceTop(e){return ground-e.height+(e.behavior==='moving'?Math.sin(clock*1.7+e.phase)*22:0)}
 function solid(e){if(e.kind==='gate')return Math.sin(clock*2.6+e.offset)>.12;if(e.kind==='flame')return Math.sin(clock*3.1+e.offset)>.28;return true}
+function routeHit(label){
+ if(invulnerable>0)return false;
+ if(shieldReady){shieldReady=false;invulnerable=1.1;notify('THE ROLL SAVED YE!');tone(490,.18,'triangle',.09);burst(hero.x,hero.y,worlds[stage].edge,22);return false}
+ skillStats.coneChain=0;end(false,label);return true
+}
 function tick(dt){biomeFade=Math.max(0,biomeFade-dt);clock+=dt;elapsed+=dt;nowTime+=dt;if(power){powerTime-=dt;if(powerTime<=0){power=null;powerTime=0}}invulnerable=Math.max(0,invulnerable-dt);const w=worlds[stage],p=Math.min(1,travel/LENGTH);speed=(adventure?235+55*Math.min(1,travel/30000):w.base+w.rise*(.18*p+.82*p*p))*paceMultiplier();travel+=speed*dt;for(const e of course)if(e.kind==='platform'&&e.crumbleClock>0&&!e.broken){e.crumbleClock-=dt;if(e.crumbleClock<=0){e.broken=true;burst(hero.x,ground-e.height,worlds[stage].edge,12)}}for(const e of course)if((e.kind==='enemy'||e.kind==='gull')&&e.at-travel-(e.advance||0)<hero.x+430&&e.at-travel>hero.x-100)e.advance+=e.pace*dt;hero.buffer=Math.max(0,hero.buffer-dt);hero.coyote=Math.max(0,hero.coyote-dt);hero.land=Math.max(0,hero.land-dt);const oldFoot=hero.y+hero.r;if(hero.hold&&hero.vy<0&&hero.holdTime<.17){hero.vy-=820*dt;hero.holdTime+=dt}hero.vy=Math.min(800,hero.vy+1650*dt);hero.y+=hero.vy*dt;let landing=ground-hero.r,landedOn=null;for(const e of course){if(e.kind!=='platform'||e.broken)continue;const px=hero.x+e.at-travel,top=surfaceTop(e);if(hero.x+14>px+8&&hero.x-14<px+e.width-8&&oldFoot<=top+5&&hero.y+hero.r>=top&&hero.vy>=0)if(top-hero.r<landing){landing=top-hero.r;landedOn=e}}if(hero.y>=landing){let impact=hero.vy,wasAirborne=hero.vy>0;if(impact>180){hero.land=.14;burst(hero.x,landing+hero.r,landedOn?'#e4cf91':w.edge,landedOn?8:4);tone(landedOn?230:160,.04,'triangle',.026)}hero.y=landing;hero.vy=0;hero.jumps=0;hero.coyote=.105;hero.onPlatform=!!landedOn;hero.routeHeight=landedOn?.height||0;if(landedOn?.behavior==='crumble'&&!landedOn.crumbleClock)landedOn.crumbleClock=.85;if(wasAirborne)hero.hold=false;tryJump()}else hero.onPlatform=false;let rise=ground-hero.r-hero.y,cameraTarget=(adventure||travel>1800)?Math.min(120,Math.max(0,(rise-55)*.62)):0;cameraY+=(cameraTarget-cameraY)*Math.min(1,dt*5.5);updateCombat(dt);
-for(const e of course){if(e.taken||e.kind==='platform')continue;const px=hero.x+e.at-travel-(e.kind==='enemy'||e.kind==='gull'?e.advance:0);if(px<-120||px>W+150)continue;const ey=ground-e.height;if(e.kind==='coin'||e.kind==='relic'||e.kind==='power'||e.kind==='drop'){let cy=e.kind==='drop'?e.y:ground-e.height;if(Math.hypot(px-hero.x,cy-hero.y)<(e.kind==='power'?(e.fork!=null?27:38):e.kind==='coin'?27:30)){e.taken=true;if(e.kind==='drop'){collectDrop(e,px,cy);burst(px,cy,'#ffe5a1',13)}else if(e.kind==='power'){if(e.fork!=null){for(const other of course)if(other!==e&&other.kind==='power'&&other.fork===e.fork)other.taken=true;if(e.power==='boost')fastStacks++;else slowStacks++;notify(e.power==='boost'?`GINGER ⚡ ×${fastStacks}`:`BUS PASS ❄ ×${slowStacks}`)}else if(e.power==='shield'){shieldReady=true;notify('BREAKFAST ROLL READY')}else if(e.power==='launcher'){launcherTime=Math.max(launcherTime,LAUNCHER_DURATION);launcherCooldown=0;launcherEmptyNotified=false;notify(conesCarried?'CONE CHUCKER · AUTO ARMED':'CONE CHUCKER · NEED CONES',1.8)}else{power='leap';powerTime=7;notify('NEW TRAINERS · BIG HOPS')}tone(740,.16,'triangle',.09);burst(px,cy,w.edge,18)}else if(e.kind==='coin'){let previousLifetime=save.totalCones;coins++;conesCarried++;save.totalCones++;persist();alertUnlock(previousLifetime);if(nowTime-skillStats.lastConeAt>1.7)skillStats.coneChain=0;skillStats.coneChain++;skillStats.lastConeAt=nowTime;skillStats.bestChain=Math.max(skillStats.bestChain,skillStats.coneChain);if(adventure)advScore+=10+Math.floor(travel/2600)*2;tone(540+(coins%5)*62,.055,'triangle',.043);if(coins%6===0){tone(900,.11,'sine',.04);burst(px,cy,'#ffe6a3',8)}}else{let firstGolden=!(save.records[stage].relicMask&(1<<e.id));relicMask|=1<<e.id;saveAttempt();if(firstGolden){let before=save.totalCones;save.goldenCones++;save.totalCones++;persist();alertUnlock(before)}tone(880,.18,'triangle',.09);notify(`GOLDEN CONE ${e.id+1} / 3`)}burst(px,cy,e.kind==='coin'?'#ffbf7c':w.edge,e.kind==='coin'?7:22)}continue}if(e.kind==='gull'){if(e.hostile&&invulnerable<=0&&Math.abs(px-hero.x)<27&&Math.abs(gullY(e)-hero.y)<27){if(shieldReady){shieldReady=false;invulnerable=1.1;burst(hero.x,hero.y,w.edge,15);notify('THE ROLL SAVED YE!')}else{end(false,'A swooping gull');return}}continue}if(!solid(e))continue;if(e.kind==='gate'&&Math.sin(clock*2.6+e.offset)<.53)continue;if(e.kind==='flame'&&Math.sin(clock*3.1+e.offset)<.53)continue;const left=px+5,right=px+e.width-5,top=ey+(e.kind==='gate'?4:6),bottom=ground-3;if(hero.x+13>left&&hero.x-13<right&&hero.y+16>top&&hero.y-16<bottom){if(invulnerable>0)continue;if(shieldReady){shieldReady=false;invulnerable=1.1;notify('THE ROLL SAVED YE!');tone(490,.18,'triangle',.09);burst(hero.x,hero.y,w.edge,22);continue}skillStats.coneChain=0;let label=e.kind==='enemy'?'A fearless gull':e.kind==='gate'?'A crossing barrier':e.kind==='flame'?'A steam vent':e.kind==='tall'?'A roadworks barrier':'A wheelie bin';end(false,label);return}}
+for(const e of course){if(e.taken)continue;
+ if(e.kind==='platform'){
+  if(e.solidBody){const px=hero.x+e.at-travel,top=surfaceTop(e);if(hero.x+13>px+3&&hero.x-13<px+e.width-3&&hero.y+16>top+4&&hero.y-16<ground-3){if(routeHit(e.structure==='phone'?'The phone box':e.structure==='skip'?'A builders’ skip':'A stone step'))return}}
+  continue
+ }
+ const px=hero.x+e.at-travel-(e.kind==='enemy'||e.kind==='gull'?e.advance:0);if(px<-120||px>W+150)continue;
+ if(e.kind==='routeWarning')continue;
+ if(e.kind==='routeCeiling'||e.kind==='routeFence'){
+  const top=ground-e.height-(e.baseHeight||0),bottom=top+(e.kind==='routeCeiling'?e.thickness:e.height);
+  if(hero.x+13>px+5&&hero.x-13<px+e.width-5&&hero.y+16>top+3&&hero.y-16<bottom-3){if(routeHit(e.kind==='routeFence'?'A fenced-off route':'A low bridge beam'))return}
+  continue
+ }
+ const ey=ground-e.height;if(e.kind==='coin'||e.kind==='relic'||e.kind==='power'||e.kind==='drop'){let cy=e.kind==='drop'?e.y:ground-e.height;if(Math.hypot(px-hero.x,cy-hero.y)<(e.kind==='power'?(e.fork!=null?27:38):e.kind==='coin'?27:30)){e.taken=true;if(e.kind==='drop'){collectDrop(e,px,cy);burst(px,cy,'#ffe5a1',13)}else if(e.kind==='power'){if(e.fork!=null){for(const other of course)if(other!==e&&other.kind==='power'&&other.fork===e.fork)other.taken=true;if(e.power==='boost')fastStacks++;else slowStacks++;notify(e.power==='boost'?`GINGER ⚡ ×${fastStacks}`:`BUS PASS ❄ ×${slowStacks}`)}else if(e.power==='shield'){shieldReady=true;notify('BREAKFAST ROLL READY')}else if(e.power==='launcher'){launcherTime=Math.max(launcherTime,LAUNCHER_DURATION);launcherCooldown=0;launcherEmptyNotified=false;notify(conesCarried?'CONE CHUCKER · AUTO ARMED':'CONE CHUCKER · NEED CONES',1.8)}else{power='leap';powerTime=7;notify('NEW TRAINERS · BIG HOPS')}tone(740,.16,'triangle',.09);burst(px,cy,w.edge,18)}else if(e.kind==='coin'){let previousLifetime=save.totalCones;coins++;conesCarried++;save.totalCones++;persist();alertUnlock(previousLifetime);if(nowTime-skillStats.lastConeAt>1.7)skillStats.coneChain=0;skillStats.coneChain++;skillStats.lastConeAt=nowTime;skillStats.bestChain=Math.max(skillStats.bestChain,skillStats.coneChain);if(adventure)advScore+=10+Math.floor(travel/2600)*2;tone(540+(coins%5)*62,.055,'triangle',.043);if(coins%6===0){tone(900,.11,'sine',.04);burst(px,cy,'#ffe6a3',8)}}else{let firstGolden=!(save.records[stage].relicMask&(1<<e.id));relicMask|=1<<e.id;saveAttempt();if(firstGolden){let before=save.totalCones;save.goldenCones++;save.totalCones++;persist();alertUnlock(before)}tone(880,.18,'triangle',.09);notify(`GOLDEN CONE ${e.id+1} / 3`)}burst(px,cy,e.kind==='coin'?'#ffbf7c':w.edge,e.kind==='coin'?7:22)}continue}if(e.kind==='gull'){if(e.hostile&&invulnerable<=0&&Math.abs(px-hero.x)<27&&Math.abs(gullY(e)-hero.y)<27){if(shieldReady){shieldReady=false;invulnerable=1.1;burst(hero.x,hero.y,w.edge,15);notify('THE ROLL SAVED YE!')}else{end(false,'A swooping gull');return}}continue}if(!solid(e))continue;if(e.kind==='gate'&&Math.sin(clock*2.6+e.offset)<.53)continue;if(e.kind==='flame'&&Math.sin(clock*3.1+e.offset)<.53)continue;const left=px+5,right=px+e.width-5,top=ey+(e.kind==='gate'?4:6),bottom=ground-3;if(hero.x+13>left&&hero.x-13<right&&hero.y+16>top&&hero.y-16<bottom){if(invulnerable>0)continue;if(shieldReady){shieldReady=false;invulnerable=1.1;notify('THE ROLL SAVED YE!');tone(490,.18,'triangle',.09);burst(hero.x,hero.y,w.edge,22);continue}skillStats.coneChain=0;let label=e.kind==='enemy'?'A fearless gull':e.kind==='gate'?'A crossing barrier':e.kind==='flame'?'A steam vent':e.kind==='tall'||e.kind==='routeBarrier'?'A roadworks barrier':'A wheelie bin';end(false,label);return}}
 if(adventure){let nextStage=Math.floor(travel/(ADVENTURE_LENGTH*4))%worlds.length;if(nextStage!==stage){previousStage=stage;stage=nextStage;biomeFade=1.2}while(travel+W+ADVENTURE_LENGTH*2>advChunksGenerated*ADVENTURE_LENGTH)makeAdventureChunk(advChunksGenerated);if(course.length>160)course=course.filter(e=>e.at+(e.width||35)>travel-520)}else if(travel>=LENGTH){travel=LENGTH;updateHud();end(true);return}updateHud();if(musicOn&&nowTime>=musicNext){musicNext=nowTime+.44;tone(w.music*(Math.floor(nowTime/.44)%4===0?1.5:1),.12,'sine',.012,true)}}
 
 function gullY(e){return ground-e.height+Math.sin(clock*5+e.phase)*9}
@@ -422,7 +550,83 @@ function heroArt(){
 
 function coneArt(px,y,prize=false){let k=prize?1.27:.87,bob=Math.sin(clock*5+px*.09)*2;g.save();g.translate(px,y+bob);g.scale(k,k);g.shadowColor=prize?'#ffde65':'#f98546';g.shadowBlur=prize?16:9;g.fillStyle=prize?'#fff0b0':'#102d3a66';g.beginPath();g.ellipse(0,16,13,3,0,0,7);g.fill();pill(-14,10,28,6,prize?'#ffc44d':'#e57b40',2);g.fillStyle=prize?'#f4a740':'#ef8141';g.strokeStyle='#6c493f';g.lineWidth=2;g.beginPath();g.moveTo(-11,9);g.lineTo(-3,-12);g.quadraticCurveTo(0,-16,3,-12);g.lineTo(11,9);g.closePath();g.fill();g.stroke();g.fillStyle='#f8f0dd';g.beginPath();g.moveTo(-6,-2);g.lineTo(6,-2);g.lineTo(9,4);g.lineTo(-9,4);g.fill();g.shadowBlur=0;if(prize){g.fillStyle='#fff8cf';g.beginPath();g.arc(12,-15,3+Math.sin(clock*8),0,7);g.fill()}g.restore()}
 function powerArt(e,px){let y=ground-e.height,wobble=Math.sin(clock*5+e.at)*1.5;g.save();g.translate(px,y+wobble);g.shadowColor={boost:'#ffae4c',slow:'#8ee3e7',leap:'#ad8bfd',shield:'#ffd988',launcher:'#ff874e'}[e.power]||'#ffe49c';g.shadowBlur=12;g.fillStyle={boost:'#f6b164',slow:'#9bdce4',leap:'#c7b4f9',shield:'#f2cf91',launcher:'#ee7753'}[e.power];g.beginPath();g.arc(0,0,19,0,7);g.fill();g.strokeStyle='#183c48';g.lineWidth=2;g.stroke();g.shadowBlur=0;if(e.power==='boost'){pill(-8,-13,16,27,'#eb7645',3);pill(-8,-13,16,4,'#faf2df',2);pill(-7,3,14,5,'#f8edce',1);g.fillStyle='#fff0cc';g.font='900 15px system-ui';g.textAlign='center';g.fillText('⚡',0,2)}else if(e.power==='slow'){pill(-13,-9,26,18,'#427c9a',3);pill(-11,-6,22,12,'#c7e8dc',2);g.fillStyle='#295465';g.font='900 8px system-ui';g.textAlign='center';g.fillText('BUS',0,3)}else if(e.power==='leap'){pill(-15,0,30,9,'#664e9b',5);pill(-12,-5,19,8,'#b9a3ef',3);pill(-13,8,29,3,'#f2ebff',1);g.strokeStyle='#fff';g.beginPath();g.moveTo(-4,-4);g.lineTo(1,0);g.lineTo(7,-4);g.stroke()}else if(e.power==='launcher'){pill(-14,-2,19,8,'#304755',3);g.fillStyle='#ef763f';g.beginPath();g.moveTo(2,-9);g.lineTo(17,-14);g.lineTo(17,12);g.lineTo(2,6);g.closePath();g.fill();g.strokeStyle='#ffe6b3';g.lineWidth=2;g.stroke();pill(-6,5,8,12,'#293b43',2)}else{g.fillStyle='#c1824c';g.beginPath();g.ellipse(0,-2,14,9,0,0,7);g.fill();g.fillStyle='#f6dba4';g.beginPath();g.ellipse(0,-5,13,6,0,0,7);g.fill();pill(-10,2,20,3,'#604834',2)}g.restore()}
-function hazardArt(e,px){let w=worlds[stage],y=e.kind==='platform'?surfaceTop(e):ground-e.height,active=solid(e);g.save();if(stage===0&&e.kind==='platform'){schemePlatform(e,px,y);g.restore();return}if(!active)g.globalAlpha*=.35;
+// Illustrator-style Canvas components. Collision geometry is stored in the
+// route data; small stains, panes, bolts and signs never change the hitboxes.
+function routeStructureArt(e,px){
+ const kind=e.structure||'',y=ground-e.height-(kind==='fence'?(e.baseHeight||0):0),w=e.width,roof='#e8d6b1',shadow='#18333e';g.save();
+ if(kind==='phone'){
+  schemeGrad(px+4,y+10,w-8,ground-y-10,'#bd433a','#772d34');
+  pill(px+2,y+4,w-4,13,'#992e31',4);pill(px+7,y,w-14,9,'#d45240',5);
+  pill(px+8,y+17,w-16,12,'#ead8b5',2);g.fillStyle='#633b39';g.font='bold 7px system-ui';g.textAlign='center';g.fillText('TELEPHONE',px+w/2,y+26);
+  for(let row=0;row<3;row++)for(let col=0;col<2;col++){let x=px+11+col*(w-24)/2,py=y+33+row*15;schemeGrad(x,py,(w-27)/2,12,'#7c9da0','#3b5362');schemeLine(x,py,x+(w-27)/2,py,'#d59d83',1)}
+  pill(px+8,ground-12,w-16,6,'#e88d63',1);pill(px,ground-4,w,5,'#593b3a',1);
+  schemeLine(px+10,y+13,px+10,ground-5,'#df7965',2);schemeLine(px+w-10,y+13,px+w-10,ground-5,'#4e252f',3);
+ }
+ else if(kind==='skip'){
+  g.fillStyle='#1c3640a9';g.beginPath();g.ellipse(px+w/2,ground+2,w*.54,6,0,0,7);g.fill();
+  g.fillStyle='#b77835';g.beginPath();g.moveTo(px+3,y+11);g.lineTo(px+w-3,y+11);g.lineTo(px+w-18,ground-6);g.lineTo(px+18,ground-6);g.closePath();g.fill();
+  g.strokeStyle='#633d31';g.lineWidth=3;g.stroke();pill(px+2,y+6,w-4,10,'#dfa84b',3);
+  for(let j=0;j<5;j++){let bx=px+17+j*(w-34)/5;schemeLine(bx,y+18,bx-3,ground-9,'#e9bd76a5',1)}
+  for(let j=0;j<6;j++){let bx=px+14+j*(w-27)/6;g.fillStyle=j%2?'#746c5d':'#9e8c70';g.beginPath();g.moveTo(bx,y+7);g.lineTo(bx+8,y-4-(j%3)*3);g.lineTo(bx+17,y+7);g.fill()}
+  g.fillStyle='#fff1c1';g.font='bold 9px system-ui';g.fillText('SKIP',px+w*.38,y+36);pill(px+2,ground-6,15,6,'#2a4146',1);pill(px+w-18,ground-6,15,6,'#2a4146',1)
+ }
+ else if(kind==='shelter'){
+  g.fillStyle='#a5c8cb3d';g.fillRect(px+10,y+19,w-20,ground-y-23);
+  schemeLine(px+8,y+18,px+8,ground,'#253f4d',6);schemeLine(px+w-8,y+18,px+w-8,ground,'#253f4d',6);
+  schemeLine(px+10,y+24,px+w-10,y+24,'#d3d3bf',2);schemeLine(px+w*.62,y+19,px+w*.62,ground-8,'#415b63',3);
+  pill(px,y+3,w,17,'#2d515d',4);pill(px,y,w,6,'#b8c5bf',2);schemeLine(px+5,y+20,px+w-6,y+20,'#a9d7d8',2);
+  pill(px+21,ground-26,89,7,'#8a6a57',2);schemeLine(px+30,ground-19,px+30,ground,'#3c5158',3);
+  schemeGrad(px+w*.67,y+32,w*.22,ground-y-48,'#805278','#324d62');
+  g.fillStyle='#eac6a1';g.beginPath();g.arc(px+w*.78,y+53,8,0,7);g.fill();g.strokeStyle='#bdddb4';g.lineWidth=2;g.beginPath();g.moveTo(px+w*.78,y+62);g.lineTo(px+w*.78,ground-45);g.stroke();
+  pill(px+w-40,y+30,27,9,'#d9dcbf',2)
+ }
+ else if(kind==='scaffold'){
+  for(let x=px+8;x<px+w;x+=72){schemeLine(x,y+13,x,ground,'#506772',4);schemeLine(x+18,y+13,x+18,ground,'#81949a',2);pill(x-3,Math.min(ground-17,y+35),12,5,'#e7995b',1)}
+  for(let x=px+15;x<px+w-72;x+=72){schemeLine(x,y+30,x+72,Math.min(ground,y+105),'#8ba6a7',2);schemeLine(x+72,y+30,x,Math.min(ground,y+105),'#8ba6a7',2)}
+  pill(px-3,y+2,w+6,17,'#684e41',3);pill(px-4,y-3,w+8,7,'#d4a66b',2);
+  for(let x=px+12;x<px+w;x+=47)schemeLine(x,y+2,x,y+17,'#a77957',2)
+ }
+ else if(kind==='crate'){
+  for(let x=px+18;x<px+w-23;x+=67){schemeLine(x,y+30,x,ground,'#677478',4);schemeLine(x+45,y+30,x+45,ground,'#677478',4)}
+  pill(px,y+12,w,18,'#605c51',2);pill(px,y+8,w,6,'#cb9e6e',2);
+  for(let x=px+12;x<px+w-50;x+=66){pill(x,y-27,55,35,'#a7805d',2);g.strokeStyle='#604f47';g.lineWidth=2;g.strokeRect(x+5,y-22,45,25);schemeLine(x+6,y-22,x+49,y+4,'#745d4c',2)}
+  schemeLine(px,y+4,px+w,y+4,roof,2)
+ }
+ else if(kind==='bridge'||kind==='arch'){
+  let stone=kind==='bridge'?'#8c8e86':'#807b75';
+  g.fillStyle='#172d3c89';g.beginPath();g.moveTo(px+47,ground);g.quadraticCurveTo(px+w*.48,y+61,px+w-47,ground);g.closePath();g.fill();
+  schemeGrad(px,y+15,48,ground-y-15,stone,'#5c696b');schemeGrad(px+w-48,y+15,48,ground-y-15,stone,'#5c696b');
+  schemeLine(px+38,ground,px+w*.31,y+69,'#b7aaa0',9);schemeLine(px+w*.31,y+69,px+w*.68,y+69,'#b7aaa0',9);schemeLine(px+w*.68,y+69,px+w-38,ground,'#b7aaa0',9);
+  pill(px,y+10,w,34,'#697a7b',2);for(let x=px+18;x<px+w-6;x+=50){schemeLine(x,y+18,x,y+39,'#b6ada0a0',1);schemeLine(x,y+39,x+39,y+39,'#485f66a8',1)}
+  pill(px,y,w,13,'#c9b8a0',2);schemeLine(px,y,px+w,y,'#f1dab5',2);
+  for(let x=px+14;x<px+w;x+=60){schemeLine(x,y-17,x,y,'#394c55',3);schemeLine(x,y-17,x+49,y-17,'#394c55',2)}
+ }
+ else if(kind==='stoneStep'||kind==='railStep'){
+  if(kind==='railStep'){for(let x=px+15;x<px+w;x+=55){schemeLine(x,y+13,x,ground,'#597079',4);schemeLine(x,y+32,x+53,y+81,'#95a7a0',2)}}
+  else {schemeGrad(px,y+11,w,ground-y-11,'#988c7b','#5a6c6f');for(let yy=y+25;yy<ground;yy+=21){schemeLine(px,yy,px+w,yy,'#c0ae9590',2);for(let x=px+((Math.floor(yy-y)/21)%2?22:54);x<px+w;x+=75)schemeLine(x,yy-20,x,yy,'#cfba9c7d',1)}}
+  pill(px-2,y+1,w+4,13,'#b7aa95',2);schemeLine(px,y,px+w,y,roof,3)
+ }
+ else if(kind==='bridgeBeam'||kind==='archBeam'||kind==='awningBeam'){
+  let tint=kind==='awningBeam'?'#385a65':'#6b7474';pill(px,y,w,e.thickness,tint,2);
+  schemeLine(px,y+e.thickness-2,px+w,y+e.thickness-2,'#e5c79d',2);
+  for(let x=px+13;x<px+w;x+=65){pill(x,y+5,6,6,'#c7b79c',3);schemeLine(x,y-2,x+22,y+e.thickness,'#293f4a94',1)}
+ }
+ else if(kind==='roadworks'){
+  pill(px+2,y+4,w-4,e.height-5,'#db9260',3);for(let i=4;i<w-3;i+=15){g.fillStyle='#fff0cf';g.beginPath();g.moveTo(px+i,y+5);g.lineTo(px+i+8,y+5);g.lineTo(px+i+1,ground-2);g.lineTo(px+i-6,ground-2);g.fill()}
+  pill(px,y,w,6,'#fff0cf',2);pill(px+4,ground-4,w-8,5,shadow,1)
+ }
+ else if(kind==='closedSign'){
+  schemeLine(px+w/2,y+28,px+w/2,ground-(e.baseHeight||0),'#52616a',4);
+  pill(px,y,w,38,'#e2bc9d',3);g.strokeStyle='#7d3a3c';g.lineWidth=6;g.beginPath();g.moveTo(px+13,y+9);g.lineTo(px+w-13,y+29);g.moveTo(px+w-13,y+9);g.lineTo(px+13,y+29);g.stroke()
+ }
+ else if(kind==='fence'){
+  pill(px,y,w,e.height,'#37515b',2);g.strokeStyle='#b7c1bb';g.lineWidth=2;for(let x=px+8;x<px+w;x+=13){schemeLine(x,y+5,x,ground-e.baseHeight,'#9cb5b3',1);schemeLine(x,y+16,x+15,y+32,'#9cb5b3',1)}
+  pill(px,y,w,7,'#d1bd9c',1);g.strokeStyle='#da7655';g.lineWidth=5;g.beginPath();g.moveTo(px+12,y+17);g.lineTo(px+w-11,y+48);g.moveTo(px+w-11,y+17);g.lineTo(px+12,y+48);g.stroke()
+ }
+ g.restore()
+}
+
+function hazardArt(e,px){let w=worlds[stage],y=e.kind==='platform'?surfaceTop(e):ground-e.height,active=solid(e);g.save();if(e.structure){g.restore();routeStructureArt(e,px);return}if(stage===0&&e.kind==='platform'){schemePlatform(e,px,y);g.restore();return}if(!active)g.globalAlpha*=.35;
  if(e.kind==='platform'){pill(px,y,e.width,20,'#344e5b',4);pill(px,y-5,e.width,10,e.behavior==='moving'?'#add8d0':e.behavior==='crumble'?'#dca36e':w.edge,3);for(let i=22;i<e.width-12;i+=52){pill(px+i,y+13,2,8,'#5d7278',1);pill(px+i,y-5,3,9,'#f4e1b4a8',1)}if(e.behavior==='moving'){for(let k=0;k<3;k++)pill(px+e.width*.5-15+k*10,y+7,6,3,'#dce5c7',1)}if(e.behavior==='crumble'){g.strokeStyle='#744f47';g.lineWidth=2;for(let i=44;i<e.width-25;i+=100){g.beginPath();g.moveTo(px+i,y-6);g.lineTo(px+i+7,y+3);g.lineTo(px+i+16,y-2);g.stroke()}}if(e.height>110){g.strokeStyle='#b7d5c249';g.lineWidth=2;for(let i=38;i<e.width-25;i+=130){g.beginPath();g.moveTo(px+i,y+20);g.lineTo(px+i,y+52);g.stroke()}}}
  else if(e.kind==='gate'){pill(px,y,e.width,e.height,'#365c6c',3);for(let j=0;j<3;j++)pill(px+4,y+6+j*17,e.width-8,6,j%2?'#eccd8b':'#f28b63',1)}
  else if(e.kind==='flame'){pill(px,ground-9,e.width,9,'#465c65',3);if(active){g.strokeStyle='#e0f0efad';g.lineWidth=4;for(let j=0;j<3;j++){g.beginPath();g.moveTo(px+8+j*13,ground-10);g.quadraticCurveTo(px+j*12,ground-32,px+10+j*13,y-8);g.stroke()}}}
