@@ -1,0 +1,9 @@
+<!doctype html><meta charset="utf-8"><title>Leaderboard recovery QA</title>
+<p>Preparing an isolated recent Adventure result for recovery testing…</p>
+<script>
+const savedAt=Number(localStorage.getItem('mtcQaRecoveryAt'))||Date.now()-1000,records=Array.from({length:5},()=>({completed:false,bestMs:null,relicMask:0,bestCones:null,bestCombo:0}));localStorage.setItem('mtcQaRecoveryAt',String(savedAt));
+localStorage.setItem('victorSave2',JSON.stringify({version:2,records,totalCones:1500,goldenCones:0,selectedCharacter:3,playerName:'ROSS',adventure:{bestDistance:2500,bestScore:4242,bestCones:55,runs:[{name:'ROSS',score:4242,distance:2500,coins:55,ms:90000,at:savedAt,bestCombo:12,enemyHits:3,gullHits:2}]}}));
+localStorage.setItem('mtcLeaderboardPlayer1',JSON.stringify('77777777-7777-4777-8777-777777777777'));
+localStorage.removeItem('mtcLeaderboardQueue1');
+location.replace('/');
+</script>

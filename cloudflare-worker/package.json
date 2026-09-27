@@ -1,0 +1,8 @@
+{
+  "name":"mon-the-cones-leaderboard",
+  "version":"3.0.0-staging",
+  "private":true,
+  "type":"module",
+  "scripts":{"check":"node --check src/index.js","test":"node --test"},
+  "devDependencies":{"wrangler":"4.141.0"}
+}
