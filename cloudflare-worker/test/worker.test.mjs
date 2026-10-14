@@ -40,7 +40,7 @@ test("duplicate run id is idempotent",async()=>{let db=new FakeDB();await call("
 test("recovery submission detects an equivalent accepted run",async()=>{let original=validRun(),db=new FakeDB();await call("/v1/runs",{method:"POST",body:original,db});let response=await call("/v1/runs",{method:"POST",body:validRun({runId:"44444444-4444-4444-8444-444444444444",endedAt:original.endedAt+1000,recovery:true}),db}),data=await response.json();assert.equal(response.status,200);assert.equal(data.recovered,true);assert.equal(db.rows.length,1)});
 test("invalid values return machine-readable fields and never write",async()=>{let db=new FakeDB();for(const patch of [{displayName:"ABCDEFGH"},{score:-1},{prizeMask:8},{endedAt:Date.now()+172800000}]){let response=await call("/v1/runs",{method:"POST",body:validRun(patch),db}),data=await response.json();assert.ok([400,422].includes(response.status));assert.equal(data.retryable,false);assert.ok(data.field)}assert.equal(db.runCalls,0)});
 test("campaign submissions require a real level",async()=>{let response=await call("/v1/runs",{method:"POST",body:validRun({mode:"campaign",level:99})});assert.equal(response.status,400);assert.equal((await response.json()).error,"invalid_level")});
-test("valid Campaign completion is accepted",async()=>{let db=new FakeDB(),response=await call("/v1/runs",{method:"POST",body:validRun({mode:"campaign",level:1,score:0,distance:2100,prizeMask:7}),db});assert.equal(response.status,201);assert.equal(db.rows[0].level,1);assert.equal(db.rows[0].prize_mask,7)});
+test("valid Campaign completion is accepted",async()=>{let db=new FakeDB(),response=await call("/v1/runs",{method:"POST",body:validRun({mode:"campaign",level:1,score:0,distance:2100,prizeMask:7,durationMs:90000}),db});assert.equal(response.status,201);assert.equal(db.rows[0].level,1);assert.equal(db.rows[0].prize_mask,7)});
 test("Adventure boards ignore zero-value name checks and keep same-name players",async()=>{let db=new FakeDB([
  {run_id:"a",player_id:PLAYER,player_name:"ROSS",mode:"adventure",score:100,distance:90,cones:1,duration_ms:5000,ended_at:1},
  {run_id:"b",player_id:PLAYER,player_name:"ROSS",mode:"adventure",score:200,distance:150,cones:2,duration_ms:6000,ended_at:2},
@@ -53,3 +53,42 @@ test("campaign board returns one fastest run per player",async()=>{let db=new Fa
  {run_id:"b",player_id:PLAYER,player_name:"A",mode:"campaign",level:1,score:0,distance:2100,cones:4,duration_ms:80000,ended_at:2},
  {run_id:"c",player_id:OTHER,player_name:"B",mode:"campaign",level:1,score:0,distance:2100,cones:4,duration_ms:85000,ended_at:3}
  ]);let response=await call("/v1/leaderboard?mode=campaign&metric=time&level=1",{db}),data=await response.json();assert.deepEqual(data.entries.map(r=>r.durationMs),[80000,85000])});
+
+test('worldwide board never exposes players raw UUIDs',async()=>{
+ const db=new FakeDB([{run_id:'public',player_id:PLAYER,player_name:'BAMPOT',mode:'adventure',score:100,distance:50,cones:5,duration_ms:6000,ended_at:1}]);
+ const response=await call(`/v1/leaderboard?mode=adventure&metric=score&playerId=${PLAYER}`,{db});
+ const data=await response.json();
+ assert.equal(response.status,200);assert.equal(data.ownRank,1);
+ assert.equal(data.entries[0].displayName,'BAMPOT');assert.equal(data.entries[0].isOwn,true);
+ assert.equal(data.entries[0].playerId,PLAYER);
+ const anonymous=await call('/v1/leaderboard?mode=adventure&metric=score',{db});const anonData=await anonymous.json();assert.equal('playerId' in anonData.entries[0],false);assert.equal(JSON.stringify(anonData).includes(PLAYER),false);
+});
+test('concurrent duplicate insert returns idempotent acknowledgement',async()=>{
+ const db=new FakeDB();const originalPrepare=db.prepare.bind(db);
+ db.prepare=sql=>sql.startsWith('INSERT INTO scores')?{
+  bind:()=>({run:async()=>{
+   db.rows.push({run_id:RUN,player_id:PLAYER});
+   throw new Error('D1_ERROR: UNIQUE constraint failed: scores.run_id');
+  }})
+ }:originalPrepare(sql);
+ const response=await call('/v1/runs',{method:'POST',body:validRun(),db});
+ const data=await response.json();
+ assert.equal(response.status,200);assert.equal(data.duplicate,true);assert.equal(data.runId,RUN);
+});
+test('rejects physically impossible new runs without rejecting ordinary scores',async()=>{
+ const db=new FakeDB();
+ for(const patch of [
+  {mode:'campaign',level:1,distance:2100,durationMs:1000},
+  {mode:'campaign',level:1,distance:2101,durationMs:90000},
+  {mode:'adventure',distance:100000,durationMs:1000},
+  {mode:'adventure',cones:10000,durationMs:1000},
+  {mode:'adventure',score:9000000,distance:10,cones:1,durationMs:10000},
+  {durationMs:0}
+ ]){
+  const response=await call('/v1/runs',{method:'POST',body:validRun(patch),db});
+  assert.equal(response.status,422,JSON.stringify(patch));
+ }
+ assert.equal(db.rows.length,0);
+ const valid=await call('/v1/runs',{method:'POST',body:validRun(),db});
+ assert.equal(valid.status,201);
+});

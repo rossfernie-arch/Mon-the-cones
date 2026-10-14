@@ -11,8 +11,6 @@ CREATE TABLE IF NOT EXISTS scores (
  cones INTEGER NOT NULL DEFAULT 0 CHECK(cones >= 0),
  duration_ms INTEGER NOT NULL DEFAULT 0 CHECK(duration_ms >= 0),
  prize_mask INTEGER NOT NULL DEFAULT 0 CHECK(prize_mask BETWEEN 0 AND 7),
- enemy_hits INTEGER NOT NULL DEFAULT 0 CHECK(enemy_hits >= 0),
- gull_hits INTEGER NOT NULL DEFAULT 0 CHECK(gull_hits >= 0),
  build_version TEXT NOT NULL DEFAULT 'unknown',
  ended_at INTEGER NOT NULL,
  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP

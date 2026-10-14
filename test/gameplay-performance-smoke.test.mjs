@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import crypto from "node:crypto";
 import vm from "node:vm";
 
 const html=fs.readFileSync(new URL("../index.html",import.meta.url),"utf8");
@@ -17,16 +18,17 @@ test("the inline game script remains valid JavaScript",()=>{
  assert.doesNotThrow(()=>new vm.Script(scripts[0],{filename:"index.html:inline-game.js"}));
 });
 
-test("startup payload stays inside the audited baseline budget",t=>{
- const bytes=Buffer.byteLength(html),images=[...html.matchAll(/data:image\/[^;]+;base64,([A-Za-z0-9+/=]+)/g)];
- const decodedBytes=images.reduce((total,match)=>total+Buffer.from(match[1],"base64").length,0);
- t.diagnostic(`index.html=${bytes} bytes; embedded images=${images.length}/${decodedBytes} decoded bytes`);
- // These are regression ceilings, not recommended targets. See AUDIT_CODEX.md.
- assert.ok(bytes<=6_100_000,`index.html grew beyond its 6.1 MB audited baseline: ${bytes}`);
- assert.ok(images.length<=18,`more eager inline image payloads were added: ${images.length}`);
- assert.ok(decodedBytes<=4_450_000,`embedded compressed image bytes exceeded baseline: ${decodedBytes}`);
+test("initial HTML is small and every extracted artwork file is intact",t=>{
+ const bytes=Buffer.byteLength(html),names=[...html.matchAll(/\.\/assets\/embedded\/([a-f0-9]{16}\.(?:webp|png|jpg))/g)].map(m=>m[1]);
+ assert.ok(bytes<250_000,`index.html must remain below 250KB: ${bytes}`);
+ assert.equal(names.length,18,"all audited embedded images have external references");
+ for(const name of names){
+  const data=fs.readFileSync(new URL(`../assets/embedded/${name}`,import.meta.url));
+  assert.ok(data.length>100,`asset is not empty: ${name}`);
+  assert.equal(crypto.createHash("sha256").update(data).digest("hex").slice(0,16),name.slice(0,16),"content-hashed asset unchanged");
+ }
+ t.diagnostic(`index.html=${bytes} bytes; extracted asset refs=${names.length}`);
 });
-
 test("Adventure difficulty progresses monotonically and keeps reaction floors",()=>{
  const source=between("// ADVENTURE_PROGRESSION_START","// ADVENTURE_PROGRESSION_END");
  const context={Math,Number};context.globalThis=context;

@@ -14,7 +14,7 @@ export default {async fetch(request,env){
  try{
   if(request.method==="OPTIONS")return new Response(null,{status:204,headers:CORS});
   const url=new URL(request.url);
-  if(url.pathname==="/health")return json({ok:true,service:"mon-the-cones-leaderboard",version:"3"});
+  if(url.pathname==="/health")return json({ok:true,service:"mon-the-cones-leaderboard",version:"3",release:"20261015-mobile-hardening-01"});
   if(url.pathname==="/v1/name"&&request.method==="GET")return nameAvailability(url,env);
   if(url.pathname==="/v1/runs"&&request.method==="POST")return submit(request,env);
   if(url.pathname==="/v1/leaderboard"&&request.method==="GET")return board(url,env);
@@ -63,6 +63,11 @@ async function submit(request,env){
  if(body.endedAt>Date.now()+MAX_FUTURE_SKEW_MS)return fail("invalid_ended_at",422,"endedAt","Run end time is too far in the future.");
  const level=mode==="campaign"&&Number.isInteger(body.level)&&body.level>=1&&body.level<=5?body.level:null;
  if(mode==="campaign"&&!level)return fail("invalid_level",400,"level","Campaign level must be between 1 and 5.");
+ if(body.durationMs===0)return fail("implausible_run",422,"durationMs","Run duration is invalid.");
+ if(mode==="campaign"&&(body.distance!==2100||body.durationMs<20000))return fail("implausible_run",422,"distance","Campaign completion is inconsistent with the level length or elapsed time.");
+ if(mode==="adventure"&&body.distance>Math.ceil(body.durationMs/1000*55)+50)return fail("implausible_run",422,"distance","Distance exceeds the supported movement envelope.");
+ if(body.cones>Math.ceil(body.durationMs/1000*30)+100)return fail("implausible_run",422,"cones","Cone count exceeds the supported collection envelope.");
+ if(body.score>body.distance*200+body.cones*500+2000)return fail("implausible_run",422,"score","Score is inconsistent with distance and cones.");
  const duplicate=await env.DB.prepare("SELECT run_id FROM scores WHERE run_id=? LIMIT 1").bind(body.runId).first();
  if(duplicate)return json({ok:true,duplicate:true,runId:duplicate.run_id});
  if(body.recovery===true){
@@ -70,7 +75,15 @@ async function submit(request,env){
   if(recovered)return json({ok:true,duplicate:true,recovered:true,runId:recovered.run_id});
  }
  const build=typeof body.build==="string"&&body.build?body.build.slice(0,60):"unknown";
+ try{
  await env.DB.prepare("INSERT INTO scores(run_id,player_id,player_name,mode,level,score,distance,cones,duration_ms,prize_mask,enemy_hits,gull_hits,build_version,ended_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)").bind(body.runId,body.playerId,displayName,mode,level,body.score,body.distance,body.cones,body.durationMs,body.prizeMask||0,body.enemyHits||0,body.gullHits||0,build,body.endedAt).run();
+ }catch(error){
+  if(/UNIQUE constraint failed:\s*scores\.run_id/i.test(String(error?.message||""))){
+   const accepted=await env.DB.prepare("SELECT run_id FROM scores WHERE run_id=? LIMIT 1").bind(body.runId).first();
+   if(accepted)return json({ok:true,duplicate:true,runId:accepted.run_id});
+  }
+  throw error;
+ }
  return json({ok:true,runId:body.runId},201);
 }
 
@@ -89,6 +102,7 @@ async function board(url,env){
   sql=`SELECT * FROM (SELECT scores.*,ROW_NUMBER() OVER(PARTITION BY player_id ORDER BY ${order}) AS player_row FROM scores WHERE mode='adventure' AND duration_ms>0 AND (distance>0 OR score>0)) WHERE player_row=1 ORDER BY ${order} LIMIT 50`;
  }
  const statement=env.DB.prepare(sql);const{results=[]}=args.length?await statement.bind(...args).all():await statement.all();
- const entries=results.map(row=>({playerId:row.player_id,displayName:row.player_name,score:row.score,distance:row.distance,cones:row.cones,durationMs:row.duration_ms,prizeMask:row.prize_mask,enemyHits:row.enemy_hits||0,gullHits:row.gull_hits||0,level:row.level}));
- const own=entries.findIndex(entry=>entry.playerId===playerId);return json({ok:true,entries,ownRank:own<0?null:own+1});
+ const own=results.findIndex(row=>row.player_id===playerId);
+ const entries=results.map(row=>({isOwn:row.player_id===playerId,...(row.player_id===playerId?{playerId}:{}),displayName:row.player_name,score:row.score,distance:row.distance,cones:row.cones,durationMs:row.duration_ms,prizeMask:row.prize_mask,enemyHits:row.enemy_hits||0,gullHits:row.gull_hits||0,level:row.level}));
+ return json({ok:true,entries,ownRank:own<0?null:own+1});
 }
